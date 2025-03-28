@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Judgment Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #222;
+            color: white;
+        }
+        .room {
+            width: 400px;
+            height: 300px;
+            margin: 50px auto;
+            position: relative;
+            border: 2px solid white;
+            background-color: #444;
+            overflow: hidden;
+        }
+        .npc {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px;
+            background: gray;
+            border: 1px solid black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .npc img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+        }
+        .fire {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: url('https://media.giphy.com/media/3o7abldj0b3rxrZUxW/giphy.gif');
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .happy {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: url('https://media.giphy.com/media/l0MYt5jPR6QX5pnqM/giphy.gif');
+            background-size: cover;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .visible {
+            opacity: 1;
+        }
+        .deeds-list {
+            font-size: 14px;
+            text-align: left;
+            width: 400px;
+            height: 200px;
+            max-height: 200px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .counter {
+            margin-top: 20px;
+        }
+        .toggle-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            font-size: 20px;
+            background-color: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .toggle-button:hover {
+            background-color: darkred;
+        }
+        .npc-plea {
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 10px;
+            color: lightyellow;
+        }
+    </style>
+</head>
+<body>
+    <h1>Judgment Day</h1>
+    <div class="counter">
+        Executed: <span id="executed-count">0</span> | Spared: <span id="spared-count">0</span>
+    </div>
+    <div class="room">
+        <div id="npc" class="npc">
+            <img id="npc-image" src="" alt="NPC">
+            <div id="npc-plea" class="npc-plea"></div>
+        </div>
+        <div id="fire" class="fire"></div>
+        <div id="happy" class="happy"></div>
+    </div>
+    <button onclick="execute()">Execute</button>
+    <button onclick="spare()">Spare</button>
+
+    <button class="toggle-button" onclick="toggleDeedsList()">Toggle Deeds List</button>
+    
+    <div id="deeds-list" class="deeds-list"></div>
+
+    <script>
+        let npc = document.getElementById("npc");
+        let fire = document.getElementById("fire");
+        let happy = document.getElementById("happy");
+        let deedsList = document.getElementById("deeds-list");
+        let npcImage = document.getElementById("npc-image");
+        let executedCount = document.getElementById("executed-count");
+        let sparedCount = document.getElementById("spared-count");
+        let npcPlea = document.getElementById("npc-plea");
+        
+        let executed = 0;
+        let spared = 0;
+
+        const npcImages = [
+            "https://randomuser.me/api/portraits/men/1.jpg", 
+            "https://randomuser.me/api/portraits/women/1.jpg", 
+            "https://randomuser.me/api/portraits/men/2.jpg", 
+            "https://randomuser.me/api/portraits/women/2.jpg"
+        ];
+
+        const deeds = [
+            { type: "good", description: "Saved a kitten from a tree" },
+            { type: "good", description: "Donated money to a charity" },
+            { type: "good", description: "Helped an old lady cross the street" },
+            { type: "good", description: "Rescued someone from a burning building" },
+            { type: "good", description: "Volunteered at an animal shelter" },
+            { type: "good", description: "Taught underprivileged kids how to read" },
+            { type: "good", description: "Gave a food donation to a homeless shelter" },
+            { type: "good", description: "Gave winning lottery ticket to homeless" },
+            { type: "good", description: "Cured disease" },
+            { type: "good", description: "Cured Cancer" },
+            { type: "good", description: "Mentored a young person" },
+            { type: "good", description: "Raised funds for a good cause" },
+            { type: "good", description: "Saved someone from drowning" },
+            { type: "good", description: "Adopted an animal from a shelter" },
+            { type: "good", description: "Helped a stranger in need" },
+            { type: "good", description: "Offered a job to someone in need" },
+            { type: "good", description: "Donated blood" },
+            { type: "good", description: "Made a significant invention" },
+            { type: "good", description: "Built a house for a family" },
+            { type: "good", description: "Organized a charity event" },
+            { type: "good", description: "Helped a neighbor fix their house" },
+            { type: "good", description: "Saved a dog from being put down" },
+            { type: "good", description: "Built a school in a poor area" },
+            { type: "good", description: "Fostered abandoned children" },
+            { type: "good", description: "Helped people evacuate during a disaster" },
+            { type: "good", description: "Started a foundation for mental health" },
+            { type: "good", description: "Reduced carbon footprint significantly" },
+            { type: "good", description: "Mentored troubled youth" },
+            { type: "good", description: "Funded a medical treatment for the poor" },
+            { type: "good", description: "Spoke at a global peace summit" },
+            { type: "good", description: "Found a cure for a rare disease" },
+            { type: "good", description: "Donated land for public use" },
+            { type: "good", description: "Published a self-help book" },
+            { type: "good", description: "Paid off someone's debt" },
+            { type: "bad", description: "Stole food from a store" },
+            { type: "bad", description: "Lied to a friend about something important" },
+            { type: "bad", description: "Caused a car accident while drunk driving" },
+            { type: "bad", description: "Murdered someone in cold blood" },
+            { type: "bad", description: "Committed fraud" },
+            { type: "bad", description: "Betrayed a close friend" },
+            { type: "bad", description: "Burned down orphanage" },
+            { type: "bad", description: "Vehicular manslaughter" },
+            { type: "bad", description: "Cannibalism" },
+            { type: "bad", description: "Dated their child" },
+            { type: "bad", description: "Poisoned a city’s water supply" },
+            { type: "bad", description: "Stabbed someone over a small argument" },
+            { type: "bad", description: "Committed arson for fun" },
+            { type: "bad", description: "Falsified evidence in a court case" },
+            { type: "bad", description: "Blackmailed a loved one" },
+            { type: "bad", description: "Abused an animal" },
+            { type: "bad", description: "Destroyed a marriage out of jealousy" },
+            { type: "bad", description: "Stole a child" },
+            { type: "bad", description: "Set up a scam for profit" },
+            { type: "bad", description: "Poisoned food at a restaurant" },
+            { type: "bad", description: "Sold drugs to children" },
+            { type: "bad", description: "Destroyed someone's career out of spite" },
+            { type: "bad", description: "Spied on someone for personal gain" },
+            { type: "bad", description: "Swindled elderly people out of their life savings" },
+            { type: "bad", description: "Used violence to intimidate a community" },
+            { type: "bad", description: "Sabotaged someone's life for revenge" },
+            { type: "bad", description: "Tortured someone for fun" },
+            { type: "bad", description: "Took advantage of someone’s vulnerability" },
+            { type: "bad", description: "Destroyed someone's reputation with lies" },
+            { type: "bad", description: "Killed for money" },
+            { type: "bad", description: "Bribed a politician for personal gain" },
+            { type: "bad", description: "Organized a terrorist attack" },
+            { type: "bad", description: "Assaulted a person to steal their belongings" },
+            { type: "bad", description: "Used their power to exploit people" }
+        ];
+
+        function generateNPC() {
+            const randomDeeds = [];
+            while(randomDeeds.length < 3) {
+                const randIndex = Math.floor(Math.random() * deeds.length);
+                if (!randomDeeds.includes(deeds[randIndex])) {
+                    randomDeeds.push(deeds[randIndex]);
+                }
+            }
+
+            const goodDeeds = randomDeeds.filter(d => d.type === "good");
+            const badDeeds = randomDeeds.filter(d => d.type === "bad");
+
+            deedsList.innerHTML = `
+                ${goodDeeds.map(d => `<p>${d.description}</p>`).join('')}
+                ${badDeeds.map(d => `<p>${d.description}</p>`).join('')}
+            `;
+
+            npcImage.src = npcImages[Math.floor(Math.random() * npcImages.length)];
+            npc.style.display = 'block';
+
+            // Dynamic plea message
+            if (goodDeeds.length > badDeeds.length) {
+                npcPlea.innerHTML = getPleaMessage("good");
+            } else {
+                npcPlea.innerHTML = getPleaMessage("bad");
+            }
+        }
+
+        function getPleaMessage(deedType) {
+            const goodPleaMessages = [
+                "Please, I have done so much good. Spare me, I beg you!",
+                "I've helped others. Please let me go, I promise to do more good!",
+                "I’ve worked hard to do good. Please, show mercy on me!",
+                "I’ve given so much to the world. Don't let my past actions be forgotten!"
+            ];
+
+            const badPleaMessages = [
+                "I regret everything, please forgive me for my wrongs.",
+                "I was lost, but now I see the error of my ways. Please show mercy!",
+                "I was driven by bad choices. Please don't judge me by my worst moments!",
+                "I was foolish, but I can change! Please, spare me."
+            ];
+
+            if (deedType === "good") {
+                return goodPleaMessages[Math.floor(Math.random() * goodPleaMessages.length)];
+            } else {
+                return badPleaMessages[Math.floor(Math.random() * badPleaMessages.length)];
+            }
+        }
+
+        function execute() {
+            fire.classList.add("visible");
+            setTimeout(() => {
+                fire.classList.remove("visible");
+                executed++;
+                executedCount.innerText = executed;
+                generateNPC();
+            }, 3000);
+        }
+
+        function spare() {
+            happy.classList.add("visible");
+            setTimeout(() => {
+                happy.classList.remove("visible");
+                spared++;
+                sparedCount.innerText = spared;
+                generateNPC();
+            }, 3000);
+        }
+
+        function toggleDeedsList() {
+            deedsList.style.display = deedsList.style.display === "block" ? "none" : "block";
+        }
+
+        generateNPC();
+    </script>
+</body>
+</html>
